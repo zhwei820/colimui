@@ -385,6 +385,12 @@ func (m model) key(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			command := m.actionCmd(p.Name, "stop", "colima", "stop", "--profile", p.Name)
 			return m, tea.Batch(command, spinnerTick())
 		}
+	case "S":
+		if p := m.currentProfile(); !m.hasActiveProfileAction() && p != nil && isRunning(p.Status) {
+			m.status = "restarting " + p.Name
+			command := m.actionCmd(p.Name, "restart", "colima", "restart", "--profile", p.Name)
+			return m, tea.Batch(command, spinnerTick())
+		}
 	case "e":
 		if c := m.selectedContainer(); c != nil {
 			if action, active := m.activeContainerAction(c.ID); active {
@@ -515,6 +521,7 @@ func (m model) actionMenuItems() []actionMenuItem {
 
 	items := []actionMenuItem{
 		{label: profileLabel, shortcut: profileShortcut, enabled: !m.hasActiveProfileAction()},
+		{label: "restart colima", shortcut: "S", enabled: !m.hasActiveProfileAction() && profile != nil && isRunning(profile.Status)},
 		{label: autoStopLabel, shortcut: "a", enabled: true},
 		{label: containerLabel, shortcut: "enter", enabled: container != nil && !containerBusy},
 		{label: "restart " + containerName, shortcut: "t", enabled: container != nil && !containerBusy},

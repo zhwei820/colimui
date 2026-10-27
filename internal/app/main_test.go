@@ -345,6 +345,21 @@ func TestStartKeyWorksWithoutProfileRecord(t *testing.T) {
 	}
 }
 
+func TestRestartColimaKey(t *testing.T) {
+	backend := &fakeBackend{}
+	m := newModel(backend, func() tea.Cmd { return nil })
+	m.profiles = []profile{{Name: "default", Status: "Running"}}
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}})
+	if cmd == nil || updated.(model).status != "restarting default" {
+		t.Fatalf("restart = status %q command %t", updated.(model).status, cmd != nil)
+	}
+
+	m.profiles = []profile{{Name: "default", Status: "Stopped"}}
+	if _, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}}); cmd != nil {
+		t.Fatal("restart ran on a stopped profile")
+	}
+}
+
 func TestActionMenuShowsShortcuts(t *testing.T) {
 	m := model{width: 100, height: 36, status: "ready", actionMenu: true, containers: []container{{Name: "api", State: "running"}}}
 	view := m.View()

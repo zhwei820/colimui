@@ -67,6 +67,7 @@ go install github.com/leodeim/colimui@latest
 | `r` | Refresh profiles and containers |
 | `[` / `]` | Switch to the previous/next Colima profile |
 | `s` / `x` | Start/stop the current Colima profile |
+| `S` | Restart the current Colima profile |
 | `a` | Enable/disable idle auto-stop (saved for future runs) |
 | `m` | Enable/disable the macOS menu bar item (saved for future runs) |
 | `t` | Restart the selected container |
