@@ -1,8 +1,10 @@
 package app
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -57,8 +59,11 @@ func TestCleanLogsRemovesLogFilesRecursively(t *testing.T) {
 	if cmd == nil || m.cleanLogs() != nil {
 		t.Fatal("log cleanup did not start exactly once")
 	}
-	updated, _ := m.Update(cmd())
-	m = updated.(model)
+	for cmd != nil {
+		updated, next := m.Update(cmd())
+		m = updated.(model)
+		cmd = next
+	}
 
 	for _, p := range logs {
 		if _, err := os.Stat(p); !os.IsNotExist(err) {
@@ -72,5 +77,33 @@ func TestCleanLogsRemovesLogFilesRecursively(t *testing.T) {
 	}
 	if m.logCleanRunning || m.status != "removed 3 log files" {
 		t.Fatalf("after cleanup: running=%t status=%q", m.logCleanRunning, m.status)
+	}
+}
+
+func TestCleanLogsDeletesInBatches(t *testing.T) {
+	root := t.TempDir()
+	for i := range 250 {
+		if err := os.WriteFile(filepath.Join(root, fmt.Sprintf("f%d.log", i)), nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m := newModel(&fakeBackend{}, func() tea.Cmd { return nil })
+	m.logCleanRoot = root
+	cmd := m.cleanLogs()
+	var statuses []string
+	for cmd != nil {
+		updated, next := m.Update(cmd())
+		m = updated.(model)
+		statuses = append(statuses, m.status)
+		cmd = next
+	}
+	want := []string{
+		"removing log files: 0 done, 250 left",
+		"removing log files: 100 done, 150 left",
+		"removing log files: 200 done, 50 left",
+		"removed 250 log files",
+	}
+	if !slices.Equal(statuses, want) || m.logCleanRunning {
+		t.Fatalf("statuses %q, running=%t", statuses, m.logCleanRunning)
 	}
 }

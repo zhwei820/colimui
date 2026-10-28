@@ -53,6 +53,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case logCleanTickMsg:
 		return m, tea.Batch(m.cleanLogs(), logCleanTick(m.logCleanEvery))
 	case logCleanMsg:
+		if len(msg.pending) > 0 {
+			m.status = fmt.Sprintf("removing log files: %d done, %d left", msg.removed+msg.failed, len(msg.pending))
+			return m, removeLogBatch(msg)
+		}
 		m.logCleanRunning = false
 		m.status = fmt.Sprintf("removed %d log files", msg.removed)
 		if msg.failed > 0 {

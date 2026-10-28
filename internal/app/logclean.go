@@ -34,7 +34,12 @@ func parseLogClean(value string) (time.Duration, error) {
 
 type logCleanTickMsg struct{}
 
+const logCleanBatch = 100
+
+// logCleanMsg carries a sweep between batches: pending is what is still to be
+// deleted, so the TUI gets control back every logCleanBatch files.
 type logCleanMsg struct {
+	pending []string
 	removed int
 	failed  int
 }
@@ -46,11 +51,12 @@ func logCleanTick(every time.Duration) tea.Cmd {
 	return tea.Tick(every, func(time.Time) tea.Msg { return logCleanTickMsg{} })
 }
 
-// removeLogs deletes every regular *.log file under root, hidden directories
+// findLogs lists every regular *.log file under root, hidden directories
 // included. Unreadable directories (macOS privacy-protected ones under
 // ~/Library) are skipped rather than failing the whole sweep; symlinks are not
 // followed.
-func removeLogs(root string) (removed, failed int) {
+func findLogs(root string) []string {
+	var paths []string
 	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			if d != nil && d.IsDir() {
@@ -58,17 +64,12 @@ func removeLogs(root string) (removed, failed int) {
 			}
 			return nil
 		}
-		if !d.Type().IsRegular() || filepath.Ext(path) != ".log" {
-			return nil
-		}
-		if os.Remove(path) != nil {
-			failed++
-		} else {
-			removed++
+		if d.Type().IsRegular() && filepath.Ext(path) == ".log" {
+			paths = append(paths, path)
 		}
 		return nil
 	})
-	return removed, failed
+	return paths
 }
 
 func (m *model) cleanLogs() tea.Cmd {
@@ -77,8 +78,20 @@ func (m *model) cleanLogs() tea.Cmd {
 	}
 	m.logCleanRunning = true
 	root := m.logCleanRoot
+	return func() tea.Msg { return logCleanMsg{pending: findLogs(root)} }
+}
+
+func removeLogBatch(msg logCleanMsg) tea.Cmd {
 	return func() tea.Msg {
-		removed, failed := removeLogs(root)
-		return logCleanMsg{removed: removed, failed: failed}
+		n := min(logCleanBatch, len(msg.pending))
+		for _, path := range msg.pending[:n] {
+			if os.Remove(path) != nil {
+				msg.failed++
+			} else {
+				msg.removed++
+			}
+		}
+		msg.pending = msg.pending[n:]
+		return msg
 	}
 }

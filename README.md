@@ -116,6 +116,14 @@ home directory, hidden directories included — not just Colima's, but every
 other app's and project's too. Deleted files are not recoverable. Set
 `COLIMUI_LOG_CLEAN` to a different interval or `off`.
 
+To run the same sweep by hand, 100 files per `rm` (`--dry-run` lists them
+instead; `BATCH=` changes the size):
+
+```sh
+bash scripts/clean-logs.sh --dry-run
+bash scripts/clean-logs.sh
+```
+
 ## New macOS setup script
 
 Installs Homebrew if needed, then Colima, Docker, Docker Compose, and the latest ColimUI release.
