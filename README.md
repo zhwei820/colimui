@@ -109,6 +109,13 @@ While the TUI is open, every 4 hours it runs `docker volume prune -f` and
 images and named volumes. Set `COLIMUI_AUTO_PRUNE` to a different interval
 (e.g. `2h`, minimum `1m`) or `off`.
 
+## Log cleanup
+
+While the TUI is open, once a day it deletes every `*.log` file under your
+home directory, hidden directories included — not just Colima's, but every
+other app's and project's too. Deleted files are not recoverable. Set
+`COLIMUI_LOG_CLEAN` to a different interval or `off`.
+
 ## New macOS setup script
 
 Installs Homebrew if needed, then Colima, Docker, Docker Compose, and the latest ColimUI release.

@@ -148,6 +148,9 @@ type model struct {
 	idleProfile      string
 	idleSince        time.Time
 	autoPruneEvery   time.Duration
+	logCleanEvery    time.Duration
+	logCleanRoot     string
+	logCleanRunning  bool
 	settingsFile     string
 	backend          Backend
 	tick             tickFactory

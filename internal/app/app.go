@@ -53,6 +53,7 @@ func usage() string {
 	b.WriteString("\nEnvironment:\n")
 	fmt.Fprintf(&b, "  %-18s %s\n", autoStopEnv, "idle auto-stop for this run: a duration (45m, 2h) or off")
 	fmt.Fprintf(&b, "  %-18s %s\n", autoPruneEnv, "prune unused docker data every interval (default 4h) or off")
+	fmt.Fprintf(&b, "  %-18s %s\n", logCleanEnv, "delete every *.log under ~ each interval (default 24h) or off")
 	fmt.Fprintf(&b, "  %-18s %s\n", noColorEnv, "set to 1 to disable colors")
 	return b.String()
 }
@@ -119,5 +120,13 @@ func configuredModel() (model, error) {
 		return m, err
 	}
 	m.autoPruneEvery, err = parseAutoPrune(os.Getenv(autoPruneEnv))
+	if err != nil {
+		return m, err
+	}
+	m.logCleanEvery, err = parseLogClean(os.Getenv(logCleanEnv))
+	if err != nil {
+		return m, err
+	}
+	m.logCleanRoot, err = os.UserHomeDir()
 	return m, err
 }

@@ -19,7 +19,7 @@ const (
 )
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(m.refreshCmd(m.refreshID, ""), m.nextTick(), checkForUpdateCmd(), statsTick(), autoPruneTick(m.autoPruneEvery))
+	return tea.Batch(m.refreshCmd(m.refreshID, ""), m.nextTick(), checkForUpdateCmd(), statsTick(), autoPruneTick(m.autoPruneEvery), logCleanTick(m.logCleanEvery))
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,6 +50,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.storageRequested = time.Time{}
 		m.status = "auto-pruned " + strings.Join(msg.profiles, ", ")
 		return m, tea.Batch(m.queueRefresh(m.currentProfileName()), m.pollStorage())
+	case logCleanTickMsg:
+		return m, tea.Batch(m.cleanLogs(), logCleanTick(m.logCleanEvery))
+	case logCleanMsg:
+		m.logCleanRunning = false
+		m.status = fmt.Sprintf("removed %d log files", msg.removed)
+		if msg.failed > 0 {
+			m.status += fmt.Sprintf(" (%d failed)", msg.failed)
+		}
+		return m, nil
 	case statsTickMsg:
 		return m, tea.Batch(m.pollStats(), m.pollStorage(), statsTick())
 	case storageMsg:
