@@ -1,6 +1,7 @@
 #!/bin/bash
 # Delete every *.log file under $HOME (hidden directories included), BATCH
-# files per rm call. Deleted files are not recoverable; use --dry-run first.
+# files per rm call, printing each deleted path. Deleted files are not
+# recoverable; use --dry-run first.
 set -uo pipefail
 
 BATCH="${BATCH:-100}"
@@ -25,4 +26,4 @@ if $dry_run; then
   exit 0
 fi
 find "$HOME" -type f -name '*.log' -print0 2>/dev/null |
-  xargs -0 -n "$BATCH" rm -f --
+  xargs -0 -n "$BATCH" rm -fv --
