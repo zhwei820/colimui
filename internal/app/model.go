@@ -147,6 +147,7 @@ type model struct {
 	autoStopPinned   bool
 	idleProfile      string
 	idleSince        time.Time
+	autoPruneEvery   time.Duration
 	settingsFile     string
 	backend          Backend
 	tick             tickFactory

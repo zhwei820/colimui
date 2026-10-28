@@ -19,7 +19,7 @@ const (
 )
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(m.refreshCmd(m.refreshID, ""), m.nextTick(), checkForUpdateCmd(), statsTick())
+	return tea.Batch(m.refreshCmd(m.refreshID, ""), m.nextTick(), checkForUpdateCmd(), statsTick(), autoPruneTick(m.autoPruneEvery))
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -37,6 +37,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.storage = storageMsg{}
 		m.storageRequested = time.Time{}
 		m.status = "cleanup complete"
+		return m, tea.Batch(m.queueRefresh(m.currentProfileName()), m.pollStorage())
+	case autoPruneTickMsg:
+		return m, tea.Batch(m.autoPrune(), autoPruneTick(m.autoPruneEvery))
+	case autoPruneMsg:
+		m.cleanupRunning = false
+		if msg.err != nil {
+			m.err, m.status = msg.err, "auto-prune failed"
+			return m, nil
+		}
+		m.storage = storageMsg{}
+		m.storageRequested = time.Time{}
+		m.status = "auto-pruned " + strings.Join(msg.profiles, ", ")
 		return m, tea.Batch(m.queueRefresh(m.currentProfileName()), m.pollStorage())
 	case statsTickMsg:
 		return m, tea.Batch(m.pollStats(), m.pollStorage(), statsTick())

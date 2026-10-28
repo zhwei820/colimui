@@ -102,6 +102,13 @@ every profile (not just the selected one), keeps working after the TUI exits,
 and shows the countdown in each profile's submenu. A menu bar item started
 from the TUI follows the saved setting, not `COLIMUI_AUTO_STOP`.
 
+## Auto-prune
+
+While the TUI is open, every 4 hours it runs `docker volume prune -f` and
+`docker system prune -f` on each running profile. Unlike `c`, it keeps tagged
+images and named volumes. Set `COLIMUI_AUTO_PRUNE` to a different interval
+(e.g. `2h`, minimum `1m`) or `off`.
+
 ## New macOS setup script
 
 Installs Homebrew if needed, then Colima, Docker, Docker Compose, and the latest ColimUI release.

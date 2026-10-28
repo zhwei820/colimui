@@ -52,6 +52,7 @@ func usage() string {
 	}
 	b.WriteString("\nEnvironment:\n")
 	fmt.Fprintf(&b, "  %-18s %s\n", autoStopEnv, "idle auto-stop for this run: a duration (45m, 2h) or off")
+	fmt.Fprintf(&b, "  %-18s %s\n", autoPruneEnv, "prune unused docker data every interval (default 4h) or off")
 	fmt.Fprintf(&b, "  %-18s %s\n", noColorEnv, "set to 1 to disable colors")
 	return b.String()
 }
@@ -114,5 +115,9 @@ func configuredModel() (model, error) {
 	m.menubar = saved.menubarEnabled()
 	m.autoStopPinned = strings.TrimSpace(os.Getenv(autoStopEnv)) != ""
 	m.autoStopAfter, m.autoStop, err = resolveAutoStop(os.Getenv(autoStopEnv), saved, m.settingsFile)
+	if err != nil {
+		return m, err
+	}
+	m.autoPruneEvery, err = parseAutoPrune(os.Getenv(autoPruneEnv))
 	return m, err
 }
